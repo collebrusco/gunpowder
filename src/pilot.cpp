@@ -49,42 +49,8 @@ static void input() {
 	}
 }
 
-void Game::user_tick(size_t ticks, float dt) {
-
-	df.clear();
-
-	for (auto e : df.dots.view<Dot>()) {
-		auto& d = df.dots.getComp<Dot>(e);
-		if (d.y > 0) {
-			if (df.lookup.empty(d.x,d.y-1)){
-				d.y--;
-			} else {
-				int32_t a = rand() & 0x00000002; a--;
-				if (d.x-a > 0 && d.x - a < df.x() && df.lookup.empty(d.x-a,d.y-1)) {
-					d.x-=a; d.y--;
-				} else if (d.x+a > 0 && d.x+a < df.x() && df.lookup.empty(d.x+a,d.y-1)) {
-					d.x+=a; d.y--;
-				}
-			}
-		}
-	}
-
-	df.lookup.clear();
-
-	for (auto e : df.dots.view<Dot>()) {
-		auto& d = df.dots.getComp<Dot>(e);
-		df.lookup.set({d.x,d.y},e);
-	}
-
-
-	df.update();
-
-	renderer.buffer_texture(df);
-
-	static size_t ix = 0;
-	static float buff[20];
-	buff[ix] = 1./dt;
-	ix++;
+static void TPS(float dt) {	static size_t ix = 0; static float buff[20];
+	buff[ix] = 1./dt; ix++;
 	if (ix >= 20) {
 		float sm = 0;
 		for (int j = 0; j < 20; j++) {sm += buff[j];}
@@ -93,12 +59,26 @@ void Game::user_tick(size_t ticks, float dt) {
 	}
 }
 
+void Game::user_tick(size_t ticks, float dt) {
+
+	df.erase_dots();
+
+	df.update_dots();
+
+	df.commit_dots();
+
+	df.paint_dots();
+
+	renderer.buffer_texture(df);
+
+	TPS(dt);
+}
+
 void Game::user_update(float dt) {
 	if (window.keyboard[GLFW_KEY_ESCAPE].pressed) this->close();
 	input();
 
 	renderer.render();
-	// LOG_INF("%2f FPS", 1./dt);
 }
 
 void Game::user_destroy() {

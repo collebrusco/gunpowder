@@ -32,20 +32,52 @@ void Dotfield::color_texture(uint32_t i, uint8_t * clr) {
 	memcpy(&_pixels[i], clr, 3);
 }
 
-void Dotfield::update() {
-	for (auto e : dots.view<Dot>()) {
-		Dot& d = dots.getComp<Dot>(e);
-		// if (((d.y * x()) + d.x) == -1) LOG_ERR("%d,%d = -1u!!!",d.x,d.y);
-		color_texture((d.y * x()) + d.x, d.color);
-	}
-}
-
-void Dotfield::clear() {
+void Dotfield::erase_dots() {
 	for (auto e : dots.view<Dot>()) {
 		Dot& d = dots.getComp<Dot>(e);
 		uint8_t z[] = {0x00,0x00,0x00,0x00};
-		// if (((d.y * x()) + d.x) == -1) LOG_ERR("%d,%d = -1c!!!",d.x,d.y);
 		color_texture((d.y * x()) + d.x, z);
+	}
+}
+
+void Dotfield::update_dots() {
+	for (auto e : this->dots.view<Dot>()) {
+		auto& d = this->dots.getComp<Dot>(e);
+		if (d.y > 0) {
+			if (this->lookup.empty(d.x,d.y-1)){
+				d.y--;
+			} else {
+				int32_t a = rand() & 0x00000002; a--;
+				if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y-1)) {
+					d.x-=a; d.y--;
+				} else if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y-1)) {
+					d.x+=a; d.y--;
+				}
+			}
+		}
+	}
+}
+
+void Dotfield::commit_dots() {
+	this->lookup.clear();
+
+	std::unordered_set<glm::ivec2> debugset;
+	uint32_t debugct = 0;
+
+	for (auto e : this->dots.view<Dot>()) {
+		auto& d = this->dots.getComp<Dot>(e);
+		if (debugset.find({d.x,d.y}) != debugset.end()) {
+			LOG_ERR("overlapping dots! %d", ++debugct);
+		}
+		debugset.insert({d.x,d.y});
+		this->lookup.set({d.x,d.y},e);
+	}
+}
+
+void Dotfield::paint_dots() {
+	for (auto e : dots.view<Dot>()) {
+		Dot& d = dots.getComp<Dot>(e);
+		color_texture((d.y * x()) + d.x, d.color);
 	}
 }
 

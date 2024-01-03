@@ -41,8 +41,11 @@ public:
 		dots.addComp<Dot>(e, x, y, args...);
 		lookup.set({x,y},e);
 	}
-	void update();
-	void clear();
+
+	void erase_dots();
+	void update_dots();
+	void commit_dots();
+	void paint_dots();
 
 	class DotLookup {
 		std::unordered_map<glm::ivec2, entID> lookup;
