@@ -38,7 +38,7 @@ OBJ = $(SRC:.cpp=.o)
 BIN = bin
 TARGET = main.out
 
-.PHONY: all clean
+.PHONY: all clean dirs
 
 all: dirs libs 
 
@@ -62,7 +62,8 @@ r: $(BIN)/$(TARGET)
 
 cbr: c b r
 
-$(BIN)/$(TARGET): $(OBJ)
+$(BIN)/$(TARGET): $(OBJ) 
+	mkdir -p ./$(BIN)
 	$(CPP) -o $(BIN)/$(TARGET) $^ $(LDFLAGS)
 
 %.o: %.cpp
