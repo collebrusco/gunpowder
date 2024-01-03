@@ -4,10 +4,11 @@
 
 class Game : public GameDriver {
 public:
-	Game(Window& win);
-	void userCreate() override final;
-	void userUpdate(float dt) override final;
-	void userDestroy() override final;
+	Game();
+	void user_create() override final;
+	void user_update(float dt) override final;
+	void user_tick(size_t ticks, float dt) override final;
+	void user_destroy() override final;
 };
 
 #endif

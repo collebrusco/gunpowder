@@ -10,21 +10,25 @@ protected:
 public:
     bool create();
     void start();
-    GameDriver(Window& win);
-
-    Window& window;
+    void loop();
+    GameDriver(uint32_t tick_rate);
 
     float const& dt;
     ftime::Stopwatch const& launch_timer;
+    uint32_t const& tick_rate;
 
 private:
+    uint32_t _tick_rate;
 	bool _close;
 	float _dt;
+    size_t _ticks;
 	ftime::Stopwatch _launch_timer;
+    ftime::Stopwatch tick_timer;
     ftime::Stopwatch delta_timer;
-    virtual void userCreate() = 0;
-    virtual void userUpdate(float dt) = 0;
-    virtual void userDestroy() = 0;
+    virtual void user_create() = 0;
+    virtual void user_tick(size_t tick, float dt) = 0;
+    virtual void user_update(float dt) = 0;
+    virtual void user_destroy() = 0;
     void exit();
 };
 

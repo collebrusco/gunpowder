@@ -10,7 +10,7 @@ using std::unordered_map;
 using ftime::Stopwatch;
 LOG_MODULE(game);
 
-Game::Game(Window& win) : GameDriver(win) {}
+Game::Game() : GameDriver(20) {}
 
 namespace std { template <> struct hash<ivec2> {
 std::size_t operator()(const ivec2& obj) const {
@@ -116,21 +116,25 @@ struct Renderer {
                   	df.x(), df.y(), GL_RGB, GL_UNSIGNED_BYTE, df.pixels());
     	df_tex.unbind();
 	}
-	void render() {
-		gl.clear();
-		df_tex.bind();
-
+	void buffer_texture() {
 		timer.reset_start();
 		df_tex.bind();
     	df_tex.alloc(GL_TEXTURE_2D, 0, GL_RGB32F,
                   	 df.x(), df.y(), GL_RGB, GL_UNSIGNED_BYTE, df.pixels());
 		double stop = timer.stop_reset();
+		df_tex.unbind();
 		// LOG_DBG("updating took %3f ms", stop);
+	}
+	void render() {
+		gl.clear();
+		df_tex.bind();
 
 		df_shad.bind();
 		timer.reset_start();
 		gl.draw_mesh(quad);
-		stop = timer.stop_reset();
+		double stop = timer.stop_reset();
+		df_tex.unbind();
+		df_shad.unbind();
 		// LOG_DBG("drawing took %3f ms", stop);
 	}
 };
@@ -139,7 +143,7 @@ static Renderer renderer = Renderer();
 
 #include <stdlib.h>
 
-void Game::userCreate() {
+void Game::user_create() {
 	renderer.init();
 	srand(656789);
 
@@ -175,9 +179,7 @@ static void input() {
 	}
 }
 
-void Game::userUpdate(float dt) {
-	if (window.keyboard[GLFW_KEY_ESCAPE].pressed) this->close();
-	input();
+void Game::user_tick(size_t ticks, float dt) {
 
 	df.clear();
 
@@ -204,12 +206,32 @@ void Game::userUpdate(float dt) {
 		df.lookup.set({d.x,d.y},e);
 	}
 
+
 	df.update();
+
+	renderer.buffer_texture();
+
+	static size_t ix = 0;
+	static float buff[20];
+	buff[ix] = 1./dt;
+	ix++;
+	if (ix >= 20) {
+		float sm = 0;
+		for (int j = 0; j < 20; j++) {sm += buff[j];}
+		ix = 0;
+		LOG_INF("%3f TPS",sm/20.);
+	}
+}
+
+void Game::user_update(float dt) {
+	if (window.keyboard[GLFW_KEY_ESCAPE].pressed) this->close();
+	input();
+
 	renderer.render();
 	// LOG_INF("%2f FPS", 1./dt);
 }
 
-void Game::userDestroy() {
+void Game::user_destroy() {
 	gl.destroy();
 }
 
