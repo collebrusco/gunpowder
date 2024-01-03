@@ -5,7 +5,7 @@ LOG_MODULE(main);
 
 #include "pilot.h"
 
-static Game game(window);
+static Game game;
 
 int main() {
 	gl.init();
