@@ -51,9 +51,8 @@ libs:
 
 b: $(BIN)/$(TARGET)
 
-c:
+c: clean
 	clear
-	clean
 
 cb: c b
 

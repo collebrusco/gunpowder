@@ -23,11 +23,10 @@ static DotRenderer renderer = DotRenderer();
 void Game::user_create() {
 	renderer.init();
 	srand(656789);
-
-	for (int k = 0; k < 30; k++) {
-		for (int i = 0; i < 80; i++) {
-			int x = (128-40)+i;
-			int y = 128-k;
+	for (int k = 0; k < 128; k++) {
+		for (int i = 0; i < 128; i++) {
+			int x = (128-64)+i;
+			int y = 200-k;
 			df.add_dot(x, y, 0xFC, 0xFC, 0xFC);
 		}
 	}
@@ -63,8 +62,12 @@ static void input() {
 			for (int j = 0; j < brush_size; j++) {
 				if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
 				if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
-				if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j))
-					df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0xFE,0xFC,0xFF);
+				if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j)) {
+					if (window.keyboard[GLFW_KEY_P].down)
+						df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0x02,0x01,0xFE, true);
+					else
+						df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0xFE,0xFC,0xFF), false;
+				}
 			}
 		}
 	}
@@ -79,18 +82,19 @@ static void TPS(float dt) {	static size_t ix = 0; static float buff[20];
 		LOG_INF("%1f TPS",sm/20.);
 	}
 }
-
+static Stopwatch tm(ftime::MILLISECONDS);
 void Game::user_tick(size_t ticks, float dt) {
-
+	tm.reset_start();
 	df.erase_dots();
-
+	LOG_DBG("erase: %fms",tm.stop_reset_start());
 	df.update_dots();
-
+	LOG_DBG("update: %fms",tm.stop_reset_start());
 	df.commit_dots();
-
+	LOG_DBG("commit: %fms",tm.stop_reset_start());
 	df.paint_dots();
-
+	LOG_DBG("paint: %fms",tm.stop_reset_start());
 	renderer.buffer_texture(df);
+	LOG_DBG("buffer: %fms",tm.stop_reset_start());
 
 	TPS(dt);
 }
@@ -98,8 +102,9 @@ void Game::user_tick(size_t ticks, float dt) {
 void Game::user_update(float dt) {
 	if (window.keyboard[GLFW_KEY_ESCAPE].pressed) this->close();
 	input();
-
+	tm.reset_start();
 	renderer.render();
+	LOG_DBG("render: %fms",tm.stop_reset_start());
 }
 
 void Game::user_destroy() {

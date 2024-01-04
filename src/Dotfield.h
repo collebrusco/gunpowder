@@ -14,8 +14,10 @@ std::size_t operator()(const glm::ivec2& obj) const {
 
 struct Dot {
 	Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b);
+	Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b, bool w);
 	uint32_t x, y;
 	uint8_t color[3];
+	bool water{0};
 };
 
 struct DotMove {
@@ -55,8 +57,10 @@ public:
 	void paint_dots();
 
 	class DotLookup {
+		size_t w,h;
 		std::unordered_map<glm::ivec2, entID> lookup;
 	public:
+		DotLookup(size_t x, size_t y);
 		void set(glm::ivec2 pos, entID dot);
 		void erase(int x, int y);
 		bool empty(int x, int y);
