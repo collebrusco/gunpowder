@@ -12,7 +12,9 @@ GameDriver::GameDriver(uint32_t tr) : dt(_dt), launch_timer(_launch_timer),
                                     _launch_timer(ftime::SECONDS),
                                     tick_timer(ftime::SECONDS),
                                     delta_timer(ftime::SECONDS)
-{}
+{
+    t_pd = 1.f/(this->tick_rate);
+}
 
 void GameDriver::exit() {
     user_destroy();
@@ -26,10 +28,10 @@ bool GameDriver::create() {
 
 void GameDriver::loop() {
     user_update(_dt);
-
-    static const float t_pd = 1./((float)(this->tick_rate));
-    if (tick_timer.read() > t_pd)
+    if (tick_timer.read() > t_pd) {
         user_tick(++_ticks, tick_timer.stop_reset_start());
+        // LOG_DBG("tick %d tpd %f, tim %f", _ticks, t_pd, tick_timer.read());
+    }
 
     window.update();
     _dt = delta_timer.stop_reset_start();

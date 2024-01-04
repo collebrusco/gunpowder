@@ -18,6 +18,7 @@ public:
     uint32_t const& tick_rate;
 
 private:
+    float t_pd;
     uint32_t _tick_rate;
 	bool _close;
 	float _dt;

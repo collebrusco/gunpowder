@@ -18,6 +18,10 @@ struct Dot {
 	uint8_t color[3];
 };
 
+struct DotMove {
+	glm::ivec2 to;
+};
+
 class Dotfield {
 	uint8_t* _pixels;
 	uint32_t _x,_y, _size;
@@ -33,14 +37,17 @@ public:
 	glm::ivec2 mouse_pos() const;
 	void color_texture(uint32_t i, uint8_t * clr);
 	template<typename...Args>
-	void add_dot(uint32_t x, uint32_t y, Args... args) {
+	entID add_dot(uint32_t x, uint32_t y, Args... args) {
 		if (x < 0 || x > this->x() || y < 0 || y > this->y()) {
-			return;
+			return 0xFFFFFFFFFFFFFFFF;
 		}
 		auto e = dots.newEntity();
 		dots.addComp<Dot>(e, x, y, args...);
 		lookup.set({x,y},e);
+		return e;
 	}
+
+	void move_dot(entID dot, uint32_t x, uint32_t y);
 
 	void erase_dots();
 	void update_dots();
@@ -51,6 +58,7 @@ public:
 		std::unordered_map<glm::ivec2, entID> lookup;
 	public:
 		void set(glm::ivec2 pos, entID dot);
+		void erase(int x, int y);
 		bool empty(int x, int y);
 		entID get(int x, int y);
 		void clear();

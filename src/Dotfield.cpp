@@ -7,6 +7,7 @@ LOG_MODULE(Dotfield);
 Dot::Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b)
 	: x(u), y(v), color{r,g,b} {}
 
+
 uint32_t Dotfield::x() const {return _x;}
 uint32_t Dotfield::y() const {return _y;}
 uint32_t Dotfield::size() const {return _size;}
@@ -32,6 +33,12 @@ void Dotfield::color_texture(uint32_t i, uint8_t * clr) {
 	memcpy(&_pixels[i], clr, 3);
 }
 
+void Dotfield::move_dot(entID dot, uint32_t x, uint32_t y) {
+	DotMove& dm = dots.addComp<DotMove>(dot);
+	// dm->from = {dots.getComp<Dot>(dot).x, dots.getComp<Dot>(dot).y};
+	dm.to = {x,y};
+}
+
 void Dotfield::erase_dots() {
 	for (auto e : dots.view<Dot>()) {
 		Dot& d = dots.getComp<Dot>(e);
@@ -45,13 +52,16 @@ void Dotfield::update_dots() {
 		auto& d = this->dots.getComp<Dot>(e);
 		if (d.y > 0) {
 			if (this->lookup.empty(d.x,d.y-1)){
-				d.y--;
+				// d.y--;
+				this->move_dot(e, d.x, d.y-1);
 			} else {
 				int32_t a = rand() & 0x00000002; a--;
 				if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y-1)) {
-					d.x-=a; d.y--;
+					// d.x-=a; d.y--;
+				this->move_dot(e, d.x-a, d.y-1);
 				} else if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y-1)) {
-					d.x+=a; d.y--;
+					// d.x+=a; d.y--;
+				this->move_dot(e, d.x+a, d.y-1);
 				}
 			}
 		}
@@ -59,30 +69,56 @@ void Dotfield::update_dots() {
 }
 
 void Dotfield::commit_dots() {
-	this->lookup.clear();
+	// this->lookup.clear();
 
-	std::unordered_set<glm::ivec2> debugset;
-	uint32_t debugct = 0;
-
-	for (auto e : this->dots.view<Dot>()) {
-		auto& d = this->dots.getComp<Dot>(e);
-		if (debugset.find({d.x,d.y}) != debugset.end()) {
-			LOG_ERR("overlapping dots! %d", ++debugct);
+	// for (auto e : dots.view<Dot>()) {
+	// 	auto& d = dots.getComp<Dot>(e);
+	// 	if (!dots.tryGetComp<DotMove>(e)) {
+	// 		lookup.set({d.x,d.y}, e);
+	// 	}
+	// }
+	for (auto e : dots.view<DotMove>()) {
+		auto& d = dots.getComp<Dot>(e);
+		auto& dm = dots.getComp<DotMove>(e);
+		if (lookup.empty(dm.to.x, dm.to.y)) {
+			lookup.erase(d.x, d.y);
+			d.x = dm.to.x; d.y = dm.to.y;
+			lookup.set({d.x,d.y}, e);
 		}
-		debugset.insert({d.x,d.y});
-		this->lookup.set({d.x,d.y},e);
+		dots.removeComp<DotMove>(e);
 	}
-}
 
+}
+#include <unordered_set>
 void Dotfield::paint_dots() {
+	std::unordered_set<ivec2> debug;
+	size_t debugct = 0;
+	size_t totalct = 0;
 	for (auto e : dots.view<Dot>()) {
+		totalct++;
 		Dot& d = dots.getComp<Dot>(e);
 		color_texture((d.y * x()) + d.x, d.color);
+		{ //DEBUG
+			if (debug.find({d.x,d.y}) != debug.end()) {
+				// LOG_ERR("overlapping dot! fuck! %d", ++debugct);
+			}
+			debug.insert({d.x,d.y});
+		}
 	}
+	{ //deBUG
+		static size_t ab = 0;
+		if (totalct != debug.size()) {
+			LOG_ERR("dot mismatch! %d total, %d dist", totalct, debug.size());
+		}
+	}
+	debug.clear();
 }
 
 void Dotfield::DotLookup::set(ivec2 pos, entID dot) {
 	lookup.insert({pos, dot});
+}
+void Dotfield::DotLookup::erase(int x, int y) {
+	lookup.erase({x, y});
 }
 bool Dotfield::DotLookup::empty(int x, int y) {
 	return lookup.end() == lookup.find({x, y});

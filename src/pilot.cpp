@@ -12,7 +12,7 @@ using std::unordered_map;
 using ftime::Stopwatch;
 LOG_MODULE(game);
 
-Game::Game() : GameDriver(20) {}
+Game::Game() : GameDriver(45) {}
 
 static Dotfield df(256, 256);
 
@@ -34,16 +34,37 @@ void Game::user_create() {
 	renderer.buffer_texture(df);
 }
 
+// min 2
 static void input() {
-	auto const& mouse = window.mouse;
+	static auto const& mouse = window.mouse;
+	static uint32_t brush_size = 5;
+	if (window.keyboard[GLFW_KEY_1].pressed)
+		brush_size = 1;
+	else if (window.keyboard[GLFW_KEY_2].pressed)
+		brush_size = 2;
+	else if (window.keyboard[GLFW_KEY_3].pressed)
+		brush_size = 3;
+	else if (window.keyboard[GLFW_KEY_4].pressed)
+		brush_size = 4;
+	else if (window.keyboard[GLFW_KEY_5].pressed)
+		brush_size = 5;
+	else if (window.keyboard[GLFW_KEY_6].pressed)
+		brush_size = 6;
+	else if (window.keyboard[GLFW_KEY_7].pressed)
+		brush_size = 7;
+	else if (window.keyboard[GLFW_KEY_8].pressed)
+		brush_size = 8;
+	else if (window.keyboard[GLFW_KEY_9].pressed)
+		brush_size = 9;
+
 	if (mouse.left.down) {
 		ivec2 mpos = df.mouse_pos();
-		for (int i = 0; i < 10; i++) {
-			for (int j = 0; j < 10; j++) {
-				if ((mpos.x-5+i) < 0 || (mpos.y-5+j) < 0) continue;
-				if ((mpos.x-5+i) > df.x() || (mpos.y-5+j) > df.y()) continue;
-				if (df.lookup.empty(mpos.x-5+i,mpos.y-5+j))
-					df.add_dot(mpos.x-5+i,mpos.y-5+j,0xFE,0xFC,0xFF);
+		for (int i = 0; i < brush_size; i++) {
+			for (int j = 0; j < brush_size; j++) {
+				if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
+				if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
+				if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j))
+					df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0xFE,0xFC,0xFF);
 			}
 		}
 	}
