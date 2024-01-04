@@ -110,22 +110,38 @@ void Dotfield::paint_dots() {
 	// debug.clear();
 }
 
-Dotfield::DotLookup::DotLookup(size_t x, size_t y) : w(x), h(y) {}
+Dotfield::DotLookup::DotLookup(size_t x, size_t y) : w(x), h(y) {
+	lookup = new entID[x*y];
+	memset(lookup, 0xFF, x*y*sizeof(entID));
+}
+
+Dotfield::DotLookup::~DotLookup() {
+	delete [] lookup;
+}
+
+static size_t p2i(int x, int y) {
+	return (y*256)+x;
+}
 
 void Dotfield::DotLookup::set(ivec2 pos, entID dot) {
-	lookup.insert({pos, dot});
+	// lookup.insert({pos, dot});
+	lookup[p2i(pos.x,pos.y)] = dot;
 }
 void Dotfield::DotLookup::erase(int x, int y) {
-	lookup.erase({x, y});
+	// lookup.erase({x, y});
+	lookup[p2i(x,y)] = 0xFFFFFFFFFFFFFFFF;
 }
 bool Dotfield::DotLookup::empty(int x, int y) {
-	return lookup.end() == lookup.find({x, y});
+	// return lookup.end() == lookup.find({x, y});
+	return lookup[p2i(x,y)] == 0xFFFFFFFFFFFFFFFF;
 }
 entID Dotfield::DotLookup::get(int x, int y) {
-	return lookup[{x,y}];
+	// return lookup[{x,y}];
+	return lookup[p2i(x,y)];
 }
 void Dotfield::DotLookup::clear() {
-	lookup.clear();
+	// lookup.clear();
+	memset(lookup, 0xFF, w*h*sizeof(entID));
 }
 
 

@@ -58,9 +58,13 @@ public:
 
 	class DotLookup {
 		size_t w,h;
-		std::unordered_map<glm::ivec2, entID> lookup;
+		// std::unordered_map<glm::ivec2, entID> lookup;
+		entID * lookup;
 	public:
 		DotLookup(size_t x, size_t y);
+		~DotLookup();
+		DotLookup(DotLookup const&) = delete;
+		DotLookup& operator=(DotLookup const&) = delete;
 		void set(glm::ivec2 pos, entID dot);
 		void erase(int x, int y);
 		bool empty(int x, int y);
