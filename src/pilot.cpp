@@ -83,7 +83,9 @@ static void TPS(float dt) {	static size_t ix = 0; static float buff[20];
 	}
 }
 static Stopwatch tm(ftime::MILLISECONDS);
+static Stopwatch ttm(ftime::MILLISECONDS);
 void Game::user_tick(size_t ticks, float dt) {
+	ttm.reset_start();
 	tm.reset_start();
 	df.erase_dots();
 	LOG_DBG("erase: %fms",tm.stop_reset_start());
@@ -95,6 +97,7 @@ void Game::user_tick(size_t ticks, float dt) {
 	LOG_DBG("paint: %fms",tm.stop_reset_start());
 	renderer.buffer_texture(df);
 	LOG_DBG("buffer: %fms",tm.stop_reset_start());
+	LOG_DBG("TOTAL: %fms\n========",ttm.stop_reset_start());
 
 	TPS(dt);
 }
