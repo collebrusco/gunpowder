@@ -23,13 +23,16 @@ static DotRenderer renderer = DotRenderer();
 void Game::user_create() {
 	renderer.init();
 	srand(656789);
-	for (int k = 0; k < 128; k++) {
-		for (int i = 0; i < 128; i++) {
-			int x = (128-64)+i;
-			int y = 200-k;
-			df.add_dot(x, y, 0xFC, 0xFC, 0xFC);
-		}
-	}
+	auto e = df.dots.newEntity();
+	df.dots.addComp<Dot>(e, 0, 0, 0, 0, 0);
+	df.dots.removeEntity(e);
+	// for (int k = 0; k < 128; k++) {
+	// 	for (int i = 0; i < 128; i++) {
+	// 		int x = (128-64)+i;
+	// 		int y = 200-k;
+	// 		df.add_dot(x, y, 0xFC, 0xFC, 0xFC,DP_NONE|DP_DOWN|DP_DOWN_SIDE);
+	// 	}
+	// }
 	renderer.buffer_texture(df);
 }
 
@@ -54,7 +57,25 @@ static void input() {
 	else if (window.keyboard[GLFW_KEY_8].pressed)
 		brush_size = 8;
 	else if (window.keyboard[GLFW_KEY_9].pressed)
-		brush_size = 9;
+		brush_size = 33;
+
+	static DotProperty prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE;
+	if (window.keyboard[GLFW_KEY_H].pressed) {
+		prop = DP_NONE;
+		LOG_DBG("switched to %d", prop);
+	}
+	else if (window.keyboard[GLFW_KEY_J].pressed) {
+		prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE;
+		LOG_DBG("switched to %d", prop);
+	}
+	else if (window.keyboard[GLFW_KEY_K].pressed) {
+		prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE | DP_SIDE;
+		LOG_DBG("switched to %d", prop);
+	}
+	else if (window.keyboard[GLFW_KEY_L].pressed) {
+		prop = DP_NONE | DP_UP | DP_UP_SIDE | DP_SIDE;
+		LOG_DBG("switched to %d", prop);
+	}
 
 	if (mouse.left.down) {
 		ivec2 mpos = df.mouse_pos();
@@ -63,10 +84,7 @@ static void input() {
 				if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
 				if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
 				if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j)) {
-					if (window.keyboard[GLFW_KEY_P].down)
-						df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0x02,0x01,0xFE, true);
-					else
-						df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0xFE,0xFC,0xFF), false;
+					df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0xFE -(rand()&0x7),0xFC -(rand()&0x7),0xFF -(rand()&0x7), prop);
 				}
 			}
 		}
@@ -87,17 +105,23 @@ static Stopwatch ttm(ftime::MILLISECONDS);
 void Game::user_tick(size_t ticks, float dt) {
 	ttm.reset_start();
 	tm.reset_start();
-	df.erase_dots();
-	LOG_DBG("erase: %fms",tm.stop_reset_start());
+
 	df.update_dots();
-	LOG_DBG("update: %fms",tm.stop_reset_start());
+	// LOG_DBG("update: %fms",tm.stop_reset_start());
+
+	df.erase_dots();
+	// LOG_DBG("erase: %fms",tm.stop_reset_start());
+
 	df.commit_dots();
-	LOG_DBG("commit: %fms",tm.stop_reset_start());
+	// LOG_DBG("commit: %fms",tm.stop_reset_start());
+
 	df.paint_dots();
-	LOG_DBG("paint: %fms",tm.stop_reset_start());
+	// LOG_DBG("paint: %fms",tm.stop_reset_start());
+
 	renderer.buffer_texture(df);
-	LOG_DBG("buffer: %fms",tm.stop_reset_start());
-	LOG_DBG("TOTAL: %fms\n========",ttm.stop_reset_start());
+	// LOG_DBG("buffer: %fms",tm.stop_reset_start());
+
+	// LOG_DBG("TOTAL: %fms\n========",ttm.stop_reset_start());
 
 	TPS(dt);
 }
@@ -107,7 +131,7 @@ void Game::user_update(float dt) {
 	input();
 	tm.reset_start();
 	renderer.render();
-	LOG_DBG("render: %fms",tm.stop_reset_start());
+	// LOG_DBG("render: %fms",tm.stop_reset_start());
 }
 
 void Game::user_destroy() {

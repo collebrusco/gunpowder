@@ -12,12 +12,30 @@ std::size_t operator()(const glm::ivec2& obj) const {
 	return (std::hash<int>().operator()(obj.x) ^ (a));
 }};}
 
+enum DotProperty {
+	DP_NONE = 0x00,
+	DP_DOWN = 0x01,
+	DP_DOWN_SIDE = 0x02,
+	DP_SIDE = 0x04,
+	DP_UP_SIDE = 0x08,
+	DP_UP = 0x10
+};
+
+inline DotProperty operator|(DotProperty const& a, DotProperty const& b) {
+	return (DotProperty)((int)a | (int)b);
+}
+inline DotProperty operator&(DotProperty const& a, DotProperty const& b) {
+	return (DotProperty)((int)a & (int)b);
+}
+inline DotProperty operator~(DotProperty const& a) {
+	return (DotProperty)(~((int)a));
+}
+
 struct Dot {
-	Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b);
-	Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b, bool w);
+	Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b, DotProperty p=DP_NONE);
 	uint32_t x, y;
 	uint8_t color[3];
-	bool water{0};
+	DotProperty props;
 };
 
 struct DotMove {
@@ -51,15 +69,16 @@ public:
 
 	void move_dot(entID dot, uint32_t x, uint32_t y);
 
-	void erase_dots();
 	void update_dots();
 	void commit_dots();
+	void erase_dots();
 	void paint_dots();
 
 	class DotLookup {
 		size_t w,h;
 		// std::unordered_map<glm::ivec2, entID> lookup;
 		entID * lookup;
+		size_t p2i(int x, int y);
 	public:
 		DotLookup(size_t x, size_t y);
 		~DotLookup();
