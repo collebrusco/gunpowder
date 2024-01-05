@@ -54,8 +54,8 @@ void Dotfield::update_dots() {
 		if (d.props & DP_DOWN && this->lookup.empty(d.x,d.y-1)){
 			this->move_dot(e, d.x, d.y-1); continue;
 		}
+		int32_t a = rand() & 0x00000002; a--;
 		if (d.props & DP_DOWN_SIDE) {
-			int32_t a = rand() & 0x00000002; a--;
 			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y-1)) {
 				this->move_dot(e, d.x-a, d.y-1); 
 				continue;
@@ -68,25 +68,23 @@ void Dotfield::update_dots() {
 		if (d.props & DP_UP && this->lookup.empty(d.x,d.y+1)){
 			this->move_dot(e, d.x, d.y+1); continue;
 		}
-		if (d.props & DP_SIDE) {
-			int32_t a = rand() & 0x00000002; a--;
-			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y)) {
-				this->move_dot(e, d.x-a, d.y); 
-				continue;
-			} 
-			if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y)) {
-				this->move_dot(e, d.x+a, d.y); 
-				continue;
-			}
-		}
 		if (d.props & DP_UP_SIDE) {
-			int32_t a = rand() & 0x00000002; a--;
 			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y+1)) {
 				this->move_dot(e, d.x-a, d.y+1); 
 				continue;
 			} 
 			if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y+1)) {
 				this->move_dot(e, d.x+a, d.y+1); 
+				continue;
+			}
+		}
+		if (d.props & DP_SIDE) {
+			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y)) {
+				this->move_dot(e, d.x-a, d.y); 
+				continue;
+			} 
+			if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y)) {
+				this->move_dot(e, d.x+a, d.y); 
 				continue;
 			}
 		}
