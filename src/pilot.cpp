@@ -59,32 +59,41 @@ static void input() {
 	else if (window.keyboard[GLFW_KEY_9].pressed)
 		brush_size = 33;
 
+	static uint8_t r = 0xFC, g = 0xF8, b = 0xFF;
 	static DotProperty prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE;
 	if (window.keyboard[GLFW_KEY_H].pressed) {
-		prop = DP_NONE;
-		LOG_DBG("switched to %d", prop);
+		prop = DP_NONE; r = g = b = 0x2F;
 	}
 	else if (window.keyboard[GLFW_KEY_J].pressed) {
-		prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE;
-		LOG_DBG("switched to %d", prop);
+		prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE; r = 0xFE; g = 0xFC; b = 0xFF;
 	}
 	else if (window.keyboard[GLFW_KEY_K].pressed) {
-		prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE | DP_SIDE;
-		LOG_DBG("switched to %d", prop);
+		prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE | DP_SIDE; r = 0x12; g = 0x0F; b = 0xFF;
 	}
 	else if (window.keyboard[GLFW_KEY_L].pressed) {
-		prop = DP_NONE | DP_UP | DP_UP_SIDE | DP_SIDE;
-		LOG_DBG("switched to %d", prop);
+		prop = DP_NONE | DP_UP | DP_UP_SIDE | DP_SIDE; r = g = b = 0x3C;
 	}
 
 	if (mouse.left.down) {
+		if (window.keyboard[GLFW_KEY_SPACE].down) {
+			ivec2 mpos = df.mouse_pos();
+			for (int i = 0; i < brush_size; i++) {
+				for (int j = 0; j < brush_size; j++) {
+					if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
+					if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
+					if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j))
+						df.kill_dot((mpos.x-(brush_size/2)+i), (mpos.y-(brush_size/2)+j));
+				}
+			}
+		} else {
 		ivec2 mpos = df.mouse_pos();
-		for (int i = 0; i < brush_size; i++) {
-			for (int j = 0; j < brush_size; j++) {
-				if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
-				if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
-				if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j)) {
-					df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0xFE -(rand()&0x7),0xFC -(rand()&0x7),0xFF -(rand()&0x7), prop);
+			for (int i = 0; i < brush_size; i++) {
+				for (int j = 0; j < brush_size; j++) {
+					if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
+					if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
+					if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j)) {
+						df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,r -(rand()&0xF),g -(rand()&0xF),b -(rand()&0xF), prop);
+					}
 				}
 			}
 		}

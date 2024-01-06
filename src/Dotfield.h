@@ -45,6 +45,7 @@ struct DotMove {
 class Dotfield {
 	uint8_t* _pixels;
 	uint32_t _x,_y, _size;
+	void erase_dot(entID e);
 public:
 	ECS dots;
 	uint32_t x() const;
@@ -67,6 +68,8 @@ public:
 		return e;
 	}
 
+	void kill_dot(entID dot);
+	void kill_dot(uint32_t x, uint32_t y);
 	void move_dot(entID dot, uint32_t x, uint32_t y);
 
 	void update_dots();

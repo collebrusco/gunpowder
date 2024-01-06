@@ -33,6 +33,26 @@ void Dotfield::color_texture(uint32_t i, uint8_t * clr) {
 	memcpy(&_pixels[i], clr, 3);
 }
 
+void Dotfield::erase_dot(entID e) {
+	Dot& d = dots.getComp<Dot>(e);
+	static uint8_t z[] = {0x00,0x00,0x00,0x00};
+	color_texture((d.y * x()) + d.x, z);
+}
+
+void Dotfield::kill_dot(entID dot) {
+	erase_dot(dot);
+	auto& d = this->dots.getComp<Dot>(dot);
+	this->lookup.erase(d.x, d.y);
+	this->dots.removeEntity(dot);
+}
+
+void Dotfield::kill_dot(uint32_t x, uint32_t y) {
+	auto e = this->lookup.get(x,y);
+	erase_dot(e);
+	this->dots.removeEntity(e);
+	this->lookup.erase(x, y);
+}
+
 void Dotfield::move_dot(entID dot, uint32_t x, uint32_t y) {
 	DotMove& dm = dots.addComp<DotMove>(dot);
 	// dm->from = {dots.getComp<Dot>(dot).x, dots.getComp<Dot>(dot).y};
@@ -41,9 +61,7 @@ void Dotfield::move_dot(entID dot, uint32_t x, uint32_t y) {
 
 void Dotfield::erase_dots() {
 	for (auto e : dots.view<DotMove>()) {
-		Dot& d = dots.getComp<Dot>(e);
-		static uint8_t z[] = {0x00,0x00,0x00,0x00};
-		color_texture((d.y * x()) + d.x, z);
+		erase_dot(e);
 	}
 }
 
@@ -81,10 +99,6 @@ void Dotfield::update_dots() {
 		if (d.props & DP_SIDE) {
 			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y)) {
 				this->move_dot(e, d.x-a, d.y); 
-				continue;
-			} 
-			if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y)) {
-				this->move_dot(e, d.x+a, d.y); 
 				continue;
 			}
 		}
