@@ -19,7 +19,7 @@ int main() {
 	// }
 
 	std::cout << "steppin 0 0 4 2\n";
-	for (auto vec : Stepper(37, 8, 2, -9)) {
+	for (auto vec : Stepper(10, 0, -10, -1)) {
 		std::cout << vec.x << ", " << vec.y << "\n";
 		std::cin.get();
 	}
