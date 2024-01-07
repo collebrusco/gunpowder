@@ -50,6 +50,7 @@ void Dotfield::kill_dot(uint32_t x, uint32_t y) {
 	if (this->lookup.empty(x,y)) return; 
 	auto e = this->lookup.get(x,y);
 	erase_dot(e);
+	LOG_DBG("KILLING");
 	this->dots.removeEntity(e);
 	this->lookup.erase(x, y);
 }

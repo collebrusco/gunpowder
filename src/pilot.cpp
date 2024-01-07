@@ -76,12 +76,13 @@ static void input() {
 
 	if (mouse.left.down) {
 		if (window.keyboard[GLFW_KEY_SPACE].down) {
+			LOG_DBG("KILL ORDER");
 			ivec2 mpos = df.mouse_pos();
 			for (int i = 0; i < brush_size; i++) {
 				for (int j = 0; j < brush_size; j++) {
 					if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
 					if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
-					if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j))
+					if (!df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j))
 						df.kill_dot((mpos.x-(brush_size/2)+i), (mpos.y-(brush_size/2)+j));
 				}
 			}
