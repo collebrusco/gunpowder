@@ -4,16 +4,28 @@
 LOG_MODULE(main);
 
 #include "pilot.h"
+	#include "util/Stepper.h"
 
 static Game game;
 
 int main() {
-	gl.init();
-	glconfig.set_shader_path("src/shaders/");
-	window.create("tanks", 768, 768);
-	
-	game.create();
-	game.start();
+	// gl.init();
+	// glconfig.set_shader_path("src/shaders/");
+	// window.create("tanks", 768, 768);
+
+	// std::cout << "steppin 0 0 4 2\n";
+	// for (auto vec : Stepper(0, 0, 4, 2)) {
+	// 	std::cout << vec.x << ", " << vec.y << "\n";
+	// }
+
+	std::cout << "steppin 0 0 4 2\n";
+	for (auto vec : Stepper(37, 8, 2, -9)) {
+		std::cout << vec.x << ", " << vec.y << "\n";
+		std::cin.get();
+	}
+
+	// game.create();
+	// game.start();
 	
 	return 0;
 }

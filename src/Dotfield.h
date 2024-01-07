@@ -21,15 +21,9 @@ enum DotProperty {
 	DP_UP = 0x10
 };
 
-inline DotProperty operator|(DotProperty const& a, DotProperty const& b) {
-	return (DotProperty)((int)a | (int)b);
-}
-inline DotProperty operator&(DotProperty const& a, DotProperty const& b) {
-	return (DotProperty)((int)a & (int)b);
-}
-inline DotProperty operator~(DotProperty const& a) {
-	return (DotProperty)(~((int)a));
-}
+inline DotProperty operator|(DotProperty const& a, DotProperty const& b) { return (DotProperty)((int)a | (int)b); }
+inline DotProperty operator&(DotProperty const& a, DotProperty const& b) { return (DotProperty)((int)a & (int)b); }
+inline DotProperty operator~(DotProperty const& a) { return (DotProperty)(~((int)a)); }
 
 struct Dot {
 	Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b, DotProperty p=DP_NONE);
