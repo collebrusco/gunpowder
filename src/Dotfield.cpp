@@ -47,6 +47,7 @@ void Dotfield::kill_dot(entID dot) {
 }
 
 void Dotfield::kill_dot(uint32_t x, uint32_t y) {
+	if (this->lookup.empty(x,y)) return; 
 	auto e = this->lookup.get(x,y);
 	erase_dot(e);
 	this->dots.removeEntity(e);
