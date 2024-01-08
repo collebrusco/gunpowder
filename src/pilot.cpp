@@ -19,17 +19,23 @@ static Dotfield df(256, 256);
 static DotRenderer renderer = DotRenderer();
 
 #include <stdlib.h>
-
+#include "util/Stepper.h"
 void Game::user_create() {
 	renderer.init();
 	srand(656789);
-	for (int k = 0; k < 128; k++) {
-		for (int i = 0; i < 128; i++) {
-			int x = (128-64)+i;
-			int y = 200-k;
-			df.add_dot(x, y, 0xFC, 0xFC, 0xFC);
-		}
-	}
+	auto e = df.dots.newEntity();
+	df.dots.addComp<Dot>(e, 0, 0, 0, 0, 0);
+	df.dots.removeEntity(e);
+	// for (int k = 0; k < 128; k++) {
+	// 	for (int i = 0; i < 128; i++) {
+	// 		int x = (128-64)+i;
+	// 		int y = 200-k;
+	// 		df.add_dot(x, y, 0xFC, 0xFC, 0xFC,DP_NONE|DP_DOWN|DP_DOWN_SIDE);
+	// 	}
+	// }
+	// for (auto pos : Stepper(64, 64, 200, 166)) {
+	// 	df.add_dot(pos.x, pos.y,0x7F -(rand()&0xF),0x7F -(rand()&0xF),0x7F -(rand()&0xF));
+	// }
 	renderer.buffer_texture(df);
 }
 
@@ -54,19 +60,54 @@ static void input() {
 	else if (window.keyboard[GLFW_KEY_8].pressed)
 		brush_size = 8;
 	else if (window.keyboard[GLFW_KEY_9].pressed)
-		brush_size = 9;
+		brush_size = 33;
 
-	if (mouse.left.down) {
+	static uint8_t r = 0xFC, g = 0xF8, b = 0xFF;
+	// static DotProperty prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE;
+	static DotType dtype = DT_STONE;
+	if (window.keyboard[GLFW_KEY_H].pressed) {
+		// prop = DP_NONE; r = g = b = 0x2F;
+		dtype = DT_STONE;
+	}
+	else if (window.keyboard[GLFW_KEY_J].pressed) {
+		// prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE; r = 0xFE; g = 0xFC; b = 0xFF;
+		dtype = DT_SAND;
+	}
+	else if (window.keyboard[GLFW_KEY_K].pressed) {
+		// prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE | DP_SIDE; r = 0x12; g = 0x0F; b = 0xFF;
+		LOG_DBG("water?");
+		dtype = DT_WATER;
+	}
+	else if (window.keyboard[GLFW_KEY_L].pressed) {
+		// prop = DP_NONE | DP_UP | DP_UP_SIDE | DP_SIDE; r = g = b = 0x3C;
+		dtype = DT_GAS;
+	}
+
+	if (mouse.left.pressed && window.keyboard[GLFW_KEY_V].down) {df.explode(df.mouse_pos().x,df.mouse_pos().y,30,50);return;}
+
+	if (mouse.left.down && !window.keyboard[GLFW_KEY_V].down) {
+		if (window.keyboard[GLFW_KEY_SPACE].down) {
+			LOG_DBG("KILL ORDER");
+			ivec2 mpos = df.mouse_pos();
+			for (int i = 0; i < brush_size; i++) {
+				for (int j = 0; j < brush_size; j++) {
+					if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
+					if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
+					if (!df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j))
+						df.kill_dot((mpos.x-(brush_size/2)+i), (mpos.y-(brush_size/2)+j));
+				}
+			}
+		} else {
 		ivec2 mpos = df.mouse_pos();
-		for (int i = 0; i < brush_size; i++) {
-			for (int j = 0; j < brush_size; j++) {
-				if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
-				if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
-				if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j)) {
-					if (window.keyboard[GLFW_KEY_P].down)
-						df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0x02,0x01,0xFE, true);
-					else
-						df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,0xFE,0xFC,0xFF), false;
+			for (int i = 0; i < brush_size; i++) {
+				for (int j = 0; j < brush_size; j++) {
+					if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
+					if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
+					if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j)) {
+						// auto e = df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,r -(rand()&0xF),g -(rand()&0xF),b -(rand()&0xF), prop);
+						// df.dots.addComp<DotResist>(e, {});
+						df.add_dot_type(dtype, mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j);
+					}
 				}
 			}
 		}
@@ -87,17 +128,24 @@ static Stopwatch ttm(ftime::MILLISECONDS);
 void Game::user_tick(size_t ticks, float dt) {
 	ttm.reset_start();
 	tm.reset_start();
-	df.erase_dots();
-	LOG_DBG("erase: %fms",tm.stop_reset_start());
+
 	df.update_dots();
-	LOG_DBG("update: %fms",tm.stop_reset_start());
+	// LOG_DBG("update: %fms",tm.stop_reset_start());
+
+	df.erase_dots();
+	// LOG_DBG("erase: %fms",tm.stop_reset_start());
+
 	df.commit_dots();
-	LOG_DBG("commit: %fms",tm.stop_reset_start());
+	// LOG_DBG("commit: %fms",tm.stop_reset_start());
+
 	df.paint_dots();
-	LOG_DBG("paint: %fms",tm.stop_reset_start());
+	// LOG_DBG("paint: %fms",tm.stop_reset_start());
+
 	renderer.buffer_texture(df);
-	LOG_DBG("buffer: %fms",tm.stop_reset_start());
-	LOG_DBG("TOTAL: %fms\n========",ttm.stop_reset_start());
+	
+	// LOG_DBG("buffer: %fms",tm.stop_reset_start());
+
+	// LOG_DBG("TOTAL: %fms\n========",ttm.stop_reset_start());
 
 	TPS(dt);
 }
@@ -107,7 +155,7 @@ void Game::user_update(float dt) {
 	input();
 	tm.reset_start();
 	renderer.render();
-	LOG_DBG("render: %fms",tm.stop_reset_start());
+	// LOG_DBG("render: %fms",tm.stop_reset_start());
 }
 
 void Game::user_destroy() {
