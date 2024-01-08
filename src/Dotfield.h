@@ -4,37 +4,17 @@
 #include <flgl/glm.h>
 #include <unordered_map>
 #include "../lib/ecs/ECS.h"
+#include <stdlib.h>
+#include "Dot.h"
+#include "util/Stepper.h"
 
-namespace std { template <> struct hash<glm::ivec2> {
-std::size_t operator()(const glm::ivec2& obj) const {
-	size_t a = std::hash<int>().operator()(obj.y);
-	a = (a << (sizeof(size_t)*4)) | (a >> (sizeof(size_t)*4));
-	return (std::hash<int>().operator()(obj.x) ^ (a));
-}};}
+// namespace std { template <> struct hash<glm::ivec2> {
+// std::size_t operator()(const glm::ivec2& obj) const {
+// 	size_t a = std::hash<int>().operator()(obj.y);
+// 	a = (a << (sizeof(size_t)*4)) | (a >> (sizeof(size_t)*4));
+// 	return (std::hash<int>().operator()(obj.x) ^ (a));
+// }};}
 
-enum DotProperty {
-	DP_NONE = 0x00,
-	DP_DOWN = 0x01,
-	DP_DOWN_SIDE = 0x02,
-	DP_SIDE = 0x04,
-	DP_UP_SIDE = 0x08,
-	DP_UP = 0x10
-};
-
-inline DotProperty operator|(DotProperty const& a, DotProperty const& b) { return (DotProperty)((int)a | (int)b); }
-inline DotProperty operator&(DotProperty const& a, DotProperty const& b) { return (DotProperty)((int)a & (int)b); }
-inline DotProperty operator~(DotProperty const& a) { return (DotProperty)(~((int)a)); }
-
-struct Dot {
-	Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b, DotProperty p=DP_NONE);
-	uint32_t x, y;
-	uint8_t color[3];
-	DotProperty props;
-};
-
-struct DotMove {
-	glm::ivec2 to;
-};
 
 class Dotfield {
 	uint8_t* _pixels;
@@ -49,6 +29,8 @@ public:
 	Dotfield(uint32_t x, uint32_t y);
 	~Dotfield();
 
+	bool bounds(int x, int y) const;
+
 	glm::ivec2 mouse_pos() const;
 	void color_texture(uint32_t i, uint8_t * clr);
 	template<typename...Args>
@@ -61,6 +43,11 @@ public:
 		lookup.set({x,y},e);
 		return e;
 	}
+
+	void add_dot_type(DotType type, uint32_t x, uint32_t y);
+
+	void exptr(int, int, int, int, uint32_t, uint8_t);
+	void explode(int x, int y, int rad, uint8_t pow);
 
 	void kill_dot(entID dot);
 	void kill_dot(uint32_t x, uint32_t y);

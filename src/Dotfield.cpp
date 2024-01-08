@@ -4,10 +4,6 @@
 using namespace glm;
 LOG_MODULE(Dotfield);
 
-Dot::Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b, DotProperty p)
-	: x(u), y(v), color{r,g,b}, props(p) {}
-
-
 uint32_t Dotfield::x() const {return _x;}
 uint32_t Dotfield::y() const {return _y;}
 uint32_t Dotfield::size() const {return _size;}
@@ -17,6 +13,11 @@ Dotfield::Dotfield(uint32_t x, uint32_t y) : lookup(x,y) {
 	_pixels = new uint8_t[3*_size];
 }
 Dotfield::~Dotfield(){delete [] _pixels;}
+
+bool Dotfield::bounds(int x, int y) const {
+	return (x > 0) && (x < this->x()) &&
+		   (y > 0) && (y < this->y());
+}
 
 ivec2 Dotfield::mouse_pos() const {
 	int x = static_cast<int>((window.mouse.pos.x / window.width) * this->x());
@@ -37,6 +38,66 @@ void Dotfield::erase_dot(entID e) {
 	Dot& d = dots.getComp<Dot>(e);
 	static uint8_t z[] = {0x00,0x00,0x00,0x00};
 	color_texture((d.y * x()) + d.x, z);
+}
+
+void Dotfield::add_dot_type(DotType type, uint32_t x, uint32_t y) {
+	uint8_t r = 0 - (rand()&0xF); uint8_t g = 0 - (rand()&0xF); uint8_t b = 0 - (rand()&0xF);
+	entID e = 0xFFFFFFFFFFFFFFFF;
+	if (x < 0 || x > this->x() || y < 0 || y > this->y()) return;
+	switch (type) {
+	case DT_STONE:
+		e = add_dot(x, y, r+0x2F, g+0x2F, b+0x2F, DP_NONE);
+		dots.addComp<DotResist>(e, 100);
+		break;
+	case DT_SAND:
+		e = add_dot(x, y, r+0xFE, g+0xFC, b+0xFF, DP_NONE|DP_DOWN|DP_DOWN_SIDE);
+		dots.addComp<DotResist>(e, 33);
+		break;
+	case DT_WATER:
+		e = add_dot(x, y, r+0x0F, g+0x3F, b+0xFF, DP_NONE|DP_DOWN|DP_DOWN_SIDE|DP_SIDE);
+		dots.addComp<DotResist>(e, 10);
+		break;
+	case DT_GAS:
+		e = add_dot(x, y, r+0xF9, g+0xFD, b+0xFE, DP_NONE|DP_UP|DP_UP_SIDE);
+		dots.addComp<DotResist>(e, 4);
+		break;
+	case DT_NONE:
+		break;
+	}
+}
+
+void Dotfield::exptr(int x1, int y1, int x2, int y2, uint32_t r, uint8_t p) {
+	// auto st = Stepper(x1,y1,x2,y2);
+	// auto it = st.begin();
+	// it = it.operator++();
+	// while (it != st.end()) {
+	// 	auto vec = *it;
+	for (auto vec : Stepper(x1,y1,x2,y2)) {
+		LOG_DBG("%d,%d",vec.x,vec.y);
+		if (!bounds(vec.x, vec.y)) continue;
+		int l2 = (vec.x - x1)*(vec.x - x1) + (vec.y - y1)*(vec.y - y1);
+		if (l2>((int)r)*((int)r)) return;
+		if (!lookup.empty(vec.x,vec.y)) {
+			auto e = lookup.get(vec.x, vec.y);
+			auto r = dots.getComp<DotResist>(e).resist;
+			if (r<=p) {
+				kill_dot(e);
+			} else return;
+		}
+		// it.operator++();
+	}
+}
+
+void Dotfield::explode(int x, int y, int rad, uint8_t pow) {
+	int i = x-(rad), j = y-(rad);
+	for (;j<y+(rad);j++)
+		exptr(x,y,i,j,rad,pow);
+	for (;i<x+(rad);i++)
+		exptr(x,y,i,j,rad,pow);
+	for (;j>=y-(rad);j--)
+		exptr(x,y,i,j,rad,pow);
+	for (;i>=x-(rad);i--)
+		exptr(x,y,i,j,rad,pow);
 }
 
 void Dotfield::kill_dot(entID dot) {
