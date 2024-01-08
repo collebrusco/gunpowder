@@ -10,8 +10,8 @@ static Game game;
 int main() {
 	gl.init();
 	glconfig.set_shader_path("src/shaders/");
-	window.create("tanks", 720, 720);
-	
+	window.create("tanks", 768, 768);
+
 	game.create();
 	game.start();
 	

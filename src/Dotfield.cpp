@@ -4,12 +4,6 @@
 using namespace glm;
 LOG_MODULE(Dotfield);
 
-Dot::Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b)
-	: x(u), y(v), color{r,g,b}, water(false) {}
-Dot::Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b, bool w)
-	: x(u), y(v), color{r,g,b}, water(w) {}
-
-
 uint32_t Dotfield::x() const {return _x;}
 uint32_t Dotfield::y() const {return _y;}
 uint32_t Dotfield::size() const {return _size;}
@@ -19,6 +13,11 @@ Dotfield::Dotfield(uint32_t x, uint32_t y) : lookup(x,y) {
 	_pixels = new uint8_t[3*_size];
 }
 Dotfield::~Dotfield(){delete [] _pixels;}
+
+bool Dotfield::bounds(int x, int y) const {
+	return (x > 0) && (x < this->x()) &&
+		   (y > 0) && (y < this->y());
+}
 
 ivec2 Dotfield::mouse_pos() const {
 	int x = static_cast<int>((window.mouse.pos.x / window.width) * this->x());
@@ -35,6 +34,88 @@ void Dotfield::color_texture(uint32_t i, uint8_t * clr) {
 	memcpy(&_pixels[i], clr, 3);
 }
 
+void Dotfield::erase_dot(entID e) {
+	Dot& d = dots.getComp<Dot>(e);
+	static uint8_t z[] = {0x00,0x00,0x00,0x00};
+	color_texture((d.y * x()) + d.x, z);
+}
+
+void Dotfield::add_dot_type(DotType type, uint32_t x, uint32_t y) {
+	uint8_t r = 0 - (rand()&0xF); uint8_t g = 0 - (rand()&0xF); uint8_t b = 0 - (rand()&0xF);
+	entID e = 0xFFFFFFFFFFFFFFFF;
+	if (x < 0 || x > this->x() || y < 0 || y > this->y()) return;
+	switch (type) {
+	case DT_STONE:
+		e = add_dot(x, y, r+0x2F, g+0x2F, b+0x2F, DP_NONE);
+		dots.addComp<DotResist>(e, 100);
+		break;
+	case DT_SAND:
+		e = add_dot(x, y, r+0xFE, g+0xFC, b+0xFF, DP_NONE|DP_DOWN|DP_DOWN_SIDE);
+		dots.addComp<DotResist>(e, 33);
+		break;
+	case DT_WATER:
+		e = add_dot(x, y, r+0x0F, g+0x3F, b+0xFF, DP_NONE|DP_DOWN|DP_DOWN_SIDE|DP_SIDE);
+		dots.addComp<DotResist>(e, 10);
+		break;
+	case DT_GAS:
+		e = add_dot(x, y, r+0xF9, g+0xFD, b+0xFE, DP_NONE|DP_UP|DP_UP_SIDE);
+		dots.addComp<DotResist>(e, 4);
+		break;
+	case DT_NONE:
+		break;
+	}
+}
+
+void Dotfield::exptr(int x1, int y1, int x2, int y2, uint32_t r, uint8_t p) {
+	// auto st = Stepper(x1,y1,x2,y2);
+	// auto it = st.begin();
+	// it = it.operator++();
+	// while (it != st.end()) {
+	// 	auto vec = *it;
+	for (auto vec : Stepper(x1,y1,x2,y2)) {
+		LOG_DBG("%d,%d",vec.x,vec.y);
+		if (!bounds(vec.x, vec.y)) continue;
+		int l2 = (vec.x - x1)*(vec.x - x1) + (vec.y - y1)*(vec.y - y1);
+		if (l2>((int)r)*((int)r)) return;
+		if (!lookup.empty(vec.x,vec.y)) {
+			auto e = lookup.get(vec.x, vec.y);
+			auto r = dots.getComp<DotResist>(e).resist;
+			if (r<=p) {
+				kill_dot(e);
+			} else return;
+		}
+		// it.operator++();
+	}
+}
+
+void Dotfield::explode(int x, int y, int rad, uint8_t pow) {
+	int i = x-(rad), j = y-(rad);
+	for (;j<y+(rad);j++)
+		exptr(x,y,i,j,rad,pow);
+	for (;i<x+(rad);i++)
+		exptr(x,y,i,j,rad,pow);
+	for (;j>=y-(rad);j--)
+		exptr(x,y,i,j,rad,pow);
+	for (;i>=x-(rad);i--)
+		exptr(x,y,i,j,rad,pow);
+}
+
+void Dotfield::kill_dot(entID dot) {
+	erase_dot(dot);
+	auto& d = this->dots.getComp<Dot>(dot);
+	this->lookup.erase(d.x, d.y);
+	this->dots.removeEntity(dot);
+}
+
+void Dotfield::kill_dot(uint32_t x, uint32_t y) {
+	if (this->lookup.empty(x,y)) return; 
+	auto e = this->lookup.get(x,y);
+	erase_dot(e);
+	LOG_DBG("KILLING");
+	this->dots.removeEntity(e);
+	this->lookup.erase(x, y);
+}
+
 void Dotfield::move_dot(entID dot, uint32_t x, uint32_t y) {
 	DotMove& dm = dots.addComp<DotMove>(dot);
 	// dm->from = {dots.getComp<Dot>(dot).x, dots.getComp<Dot>(dot).y};
@@ -42,32 +123,46 @@ void Dotfield::move_dot(entID dot, uint32_t x, uint32_t y) {
 }
 
 void Dotfield::erase_dots() {
-	for (auto e : dots.view<Dot>()) {
-		Dot& d = dots.getComp<Dot>(e);
-		uint8_t z[] = {0x00,0x00,0x00,0x00};
-		color_texture((d.y * x()) + d.x, z);
+	for (auto e : dots.view<DotMove>()) {
+		erase_dot(e);
 	}
 }
 
 void Dotfield::update_dots() {
 	for (auto e : this->dots.view<Dot>()) {
 		auto& d = this->dots.getComp<Dot>(e);
-		if (d.y > 0) {
-			if (this->lookup.empty(d.x,d.y-1)){
-				// d.y--;
-				this->move_dot(e, d.x, d.y-1);
-			} else {
-				int32_t a = rand() & 0x00000002; a--;
-				if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y-1)) {
-					// d.x-=a; d.y--;
-					this->move_dot(e, d.x-a, d.y-1);
-				} else if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y-1)) {
-					// d.x+=a; d.y--;
-					this->move_dot(e, d.x+a, d.y-1);
-				} else if (d.water && d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y)) {
-					// d.x+=a; d.y--;
-					this->move_dot(e, d.x+a, d.y);
-				}
+		if (d.y < 1) continue;
+		if (d.props & DP_DOWN && this->lookup.empty(d.x,d.y-1)){
+			this->move_dot(e, d.x, d.y-1); continue;
+		}
+		int32_t a = rand() & 0x00000002; a--;
+		if (d.props & DP_DOWN_SIDE) {
+			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y-1)) {
+				this->move_dot(e, d.x-a, d.y-1); 
+				continue;
+			} 
+			if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y-1)) {
+				this->move_dot(e, d.x+a, d.y-1); 
+				continue;
+			}
+		}
+		if (d.props & DP_UP && this->lookup.empty(d.x,d.y+1)){
+			this->move_dot(e, d.x, d.y+1); continue;
+		}
+		if (d.props & DP_UP_SIDE) {
+			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y+1)) {
+				this->move_dot(e, d.x-a, d.y+1); 
+				continue;
+			} 
+			if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y+1)) {
+				this->move_dot(e, d.x+a, d.y+1); 
+				continue;
+			}
+		}
+		if (d.props & DP_SIDE) {
+			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y)) {
+				this->move_dot(e, d.x-a, d.y); 
+				continue;
 			}
 		}
 	}
@@ -77,10 +172,12 @@ void Dotfield::commit_dots() {
 	for (auto e : dots.view<DotMove>()) {
 		auto& d = dots.getComp<Dot>(e);
 		auto& dm = dots.getComp<DotMove>(e);
-		if (lookup.empty(dm.to.x, dm.to.y)) {
-			lookup.erase(d.x, d.y);
-			d.x = dm.to.x; d.y = dm.to.y;
-			lookup.set({d.x,d.y}, e);
+		{
+			if (lookup.empty(dm.to.x, dm.to.y)) {
+				lookup.erase(d.x, d.y);
+				d.x = dm.to.x; d.y = dm.to.y;
+				lookup.set({d.x,d.y}, e);
+			}
 		}
 		dots.removeComp<DotMove>(e);
 	}
@@ -110,22 +207,38 @@ void Dotfield::paint_dots() {
 	// debug.clear();
 }
 
-Dotfield::DotLookup::DotLookup(size_t x, size_t y) : w(x), h(y) {}
+Dotfield::DotLookup::DotLookup(size_t x, size_t y) : w(x), h(y) {
+	lookup = new entID[x*y];
+	memset(lookup, 0xFF, x*y*sizeof(entID));
+}
+
+Dotfield::DotLookup::~DotLookup() {
+	delete [] lookup;
+}
+
+size_t Dotfield::DotLookup::p2i(int x, int y) {
+	return (y*w)+x;
+}
 
 void Dotfield::DotLookup::set(ivec2 pos, entID dot) {
-	lookup.insert({pos, dot});
+	// lookup.insert({pos, dot});
+	lookup[p2i(pos.x,pos.y)] = dot;
 }
 void Dotfield::DotLookup::erase(int x, int y) {
-	lookup.erase({x, y});
+	// lookup.erase({x, y});
+	lookup[p2i(x,y)] = 0xFFFFFFFFFFFFFFFF;
 }
 bool Dotfield::DotLookup::empty(int x, int y) {
-	return lookup.end() == lookup.find({x, y});
+	// return lookup.end() == lookup.find({x, y});
+	return lookup[p2i(x,y)] == 0xFFFFFFFFFFFFFFFF;
 }
 entID Dotfield::DotLookup::get(int x, int y) {
-	return lookup[{x,y}];
+	// return lookup[{x,y}];
+	return lookup[p2i(x,y)];
 }
 void Dotfield::DotLookup::clear() {
-	lookup.clear();
+	// lookup.clear();
+	memset(lookup, 0xFF, w*h*sizeof(entID));
 }
 
 
