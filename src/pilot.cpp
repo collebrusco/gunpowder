@@ -87,7 +87,6 @@ static void input() {
 
 	if (mouse.left.down && !window.keyboard[GLFW_KEY_V].down) {
 		if (window.keyboard[GLFW_KEY_SPACE].down) {
-			LOG_DBG("KILL ORDER");
 			ivec2 mpos = df.mouse_pos();
 			for (int i = 0; i < brush_size; i++) {
 				for (int j = 0; j < brush_size; j++) {
@@ -142,7 +141,7 @@ void Game::user_tick(size_t ticks, float dt) {
 	// LOG_DBG("paint: %fms",tm.stop_reset_start());
 
 	renderer.buffer_texture(df);
-	
+
 	// LOG_DBG("buffer: %fms",tm.stop_reset_start());
 
 	// LOG_DBG("TOTAL: %fms\n========",ttm.stop_reset_start());
