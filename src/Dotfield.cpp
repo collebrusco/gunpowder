@@ -58,7 +58,7 @@ void Dotfield::add_dot_type(DotType type, uint32_t x, uint32_t y) {
 		dots.addComp<DotResist>(e, 10);
 		break;
 	case DT_GAS:
-		e = add_dot(x, y, r+0xF9, g+0xFD, b+0xFE, DP_NONE|DP_UP|DP_UP_SIDE);
+		e = add_dot(x, y, r+0xF9, g+0xFD, b+0xFE, DP_NONE|DP_UP|DP_UP_SIDE|DP_SIDE);
 		dots.addComp<DotResist>(e, 4);
 		break;
 	case DT_NONE:
@@ -73,7 +73,7 @@ void Dotfield::exptr(int x1, int y1, int x2, int y2, uint32_t r, uint8_t p) {
 	// while (it != st.end()) {
 	// 	auto vec = *it;
 	for (auto vec : Stepper(x1,y1,x2,y2)) {
-		LOG_DBG("%d,%d",vec.x,vec.y);
+		// LOG_DBG("%d,%d",vec.x,vec.y);
 		if (!bounds(vec.x, vec.y)) continue;
 		int l2 = (vec.x - x1)*(vec.x - x1) + (vec.y - y1)*(vec.y - y1);
 		if (l2>((int)r)*((int)r)) return;

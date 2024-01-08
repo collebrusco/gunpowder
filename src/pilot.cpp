@@ -12,7 +12,7 @@ using std::unordered_map;
 using ftime::Stopwatch;
 LOG_MODULE(game);
 
-Game::Game() : GameDriver(45) {}
+DotRunner::DotRunner() : GameDriver(45) {}
 
 static Dotfield df(256, 256);
 
@@ -20,7 +20,7 @@ static DotRenderer renderer = DotRenderer();
 
 #include <stdlib.h>
 #include "util/Stepper.h"
-void Game::user_create() {
+void DotRunner::user_create() {
 	renderer.init();
 	srand(656789);
 	auto e = df.dots.newEntity();
@@ -124,7 +124,7 @@ static void TPS(float dt) {	static size_t ix = 0; static float buff[20];
 }
 static Stopwatch tm(ftime::MILLISECONDS);
 static Stopwatch ttm(ftime::MILLISECONDS);
-void Game::user_tick(size_t ticks, float dt) {
+void DotRunner::user_tick(size_t ticks, float dt) {
 	ttm.reset_start();
 	tm.reset_start();
 
@@ -149,7 +149,7 @@ void Game::user_tick(size_t ticks, float dt) {
 	TPS(dt);
 }
 
-void Game::user_update(float dt) {
+void DotRunner::user_update(float dt) {
 	if (window.keyboard[GLFW_KEY_ESCAPE].pressed) this->close();
 	input();
 	tm.reset_start();
@@ -157,7 +157,7 @@ void Game::user_update(float dt) {
 	// LOG_DBG("render: %fms",tm.stop_reset_start());
 }
 
-void Game::user_destroy() {
+void DotRunner::user_destroy() {
 	gl.destroy();
 }
 

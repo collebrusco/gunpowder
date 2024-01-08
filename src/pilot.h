@@ -2,9 +2,9 @@
 #define PILOT_H
 #include "Driver.h"
 
-class Game : public GameDriver {
+class DotRunner : public GameDriver {
 public:
-	Game();
+	DotRunner();
 	void user_create() override final;
 	void user_update(float dt) override final;
 	void user_tick(size_t ticks, float dt) override final;

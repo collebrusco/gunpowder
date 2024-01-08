@@ -24,8 +24,8 @@ enum DotType {
 };
 
 struct Dot {
-	Dot(uint32_t u, uint32_t v, uint8_t r, uint8_t g, uint8_t b, DotProperty p=DP_NONE);
-	uint32_t x, y;
+	Dot(int32_t u, int32_t v, uint8_t r, uint8_t g, uint8_t b, DotProperty p=DP_NONE);
+	int32_t x, y;
 	uint8_t color[3];
 	DotProperty props;
 };
