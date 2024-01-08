@@ -60,7 +60,6 @@ public:
 
 	class DotLookup {
 		size_t w,h;
-		// std::unordered_map<glm::ivec2, entID> lookup;
 		entID * lookup;
 		size_t p2i(int x, int y);
 	public:
