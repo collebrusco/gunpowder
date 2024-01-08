@@ -44,16 +44,14 @@ public:
 		return e;
 	}
 
-	void add_dot_type(DotType type, uint32_t x, uint32_t y);
-
 	void exptr(int, int, int, int, uint32_t, uint8_t);
 	void explode(int x, int y, int rad, uint8_t pow);
 
 	void kill_dot(entID dot);
-	void kill_dot(uint32_t x, uint32_t y);
-	void move_dot(entID dot, uint32_t x, uint32_t y);
+	void kill_dot(int32_t x, int32_t y);
+	void move_dot(entID dot, int32_t x, int32_t y);
 
-	void update_dots();
+	void update_dots(size_t ticks, float dt);
 	void commit_dots();
 	void erase_dots();
 	void paint_dots();

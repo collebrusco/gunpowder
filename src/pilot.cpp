@@ -63,24 +63,18 @@ static void input() {
 		brush_size = 33;
 
 	static uint8_t r = 0xFC, g = 0xF8, b = 0xFF;
-	// static DotProperty prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE;
-	static DotType dtype = DT_STONE;
+	static uint8_t sel = 0;
 	if (window.keyboard[GLFW_KEY_H].pressed) {
-		// prop = DP_NONE; r = g = b = 0x2F;
-		dtype = DT_STONE;
+		r = g = b = 0x2F; sel = 0;
 	}
 	else if (window.keyboard[GLFW_KEY_J].pressed) {
-		// prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE; r = 0xFE; g = 0xFC; b = 0xFF;
-		dtype = DT_SAND;
+		r = 0xFE; g = 0xFC; b = 0xFF; sel = 1;
 	}
 	else if (window.keyboard[GLFW_KEY_K].pressed) {
-		// prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE | DP_SIDE; r = 0x12; g = 0x0F; b = 0xFF;
-		LOG_DBG("water?");
-		dtype = DT_WATER;
+		r = 0x12; g = 0x0F; b = 0xFF; sel = 2;
 	}
 	else if (window.keyboard[GLFW_KEY_L].pressed) {
-		// prop = DP_NONE | DP_UP | DP_UP_SIDE | DP_SIDE; r = g = b = 0x3C;
-		dtype = DT_GAS;
+		r = g = b = 0x3C; sel = 3;
 	}
 
 	if (mouse.left.pressed && window.keyboard[GLFW_KEY_V].down) {df.explode(df.mouse_pos().x,df.mouse_pos().y,30,50);return;}
@@ -103,9 +97,10 @@ static void input() {
 					if ((mpos.x-(brush_size/2)+i) < 0 || (mpos.y-(brush_size/2)+j) < 0) continue;
 					if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
 					if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j)) {
-						// auto e = df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,r -(rand()&0xF),g -(rand()&0xF),b -(rand()&0xF), prop);
-						// df.dots.addComp<DotResist>(e, {});
-						df.add_dot_type(dtype, mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j);
+						auto e = df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,r -(rand()&0xF),g -(rand()&0xF),b -(rand()&0xF));
+						if (sel) df.dots.addComp<DotMovable>(e,10, mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j);
+						// df.dots.addComp<DotResist>(e, prop == DP_NONE ? 100 : 10);
+						// df.add_dot_type(dtype, mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j);
 					}
 				}
 			}
@@ -128,7 +123,7 @@ void DotRunner::user_tick(size_t ticks, float dt) {
 	ttm.reset_start();
 	tm.reset_start();
 
-	df.update_dots();
+	df.update_dots(ticks, dt);
 	// LOG_DBG("update: %fms",tm.stop_reset_start());
 
 	df.erase_dots();

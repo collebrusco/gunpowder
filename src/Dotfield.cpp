@@ -40,38 +40,7 @@ void Dotfield::erase_dot(entID e) {
 	color_texture((d.y * x()) + d.x, z);
 }
 
-void Dotfield::add_dot_type(DotType type, uint32_t x, uint32_t y) {
-	uint8_t r = 0 - (rand()&0xF); uint8_t g = 0 - (rand()&0xF); uint8_t b = 0 - (rand()&0xF);
-	entID e = 0xFFFFFFFFFFFFFFFF;
-	if (x < 0 || x > this->x() || y < 0 || y > this->y()) return;
-	switch (type) {
-	case DT_STONE:
-		e = add_dot(x, y, r+0x2F, g+0x2F, b+0x2F, DP_NONE);
-		dots.addComp<DotResist>(e, 100);
-		break;
-	case DT_SAND:
-		e = add_dot(x, y, r+0xFE, g+0xFC, b+0xFF, DP_NONE|DP_DOWN|DP_DOWN_SIDE);
-		dots.addComp<DotResist>(e, 33);
-		break;
-	case DT_WATER:
-		e = add_dot(x, y, r+0x0F, g+0x3F, b+0xFF, DP_NONE|DP_DOWN|DP_DOWN_SIDE|DP_SIDE);
-		dots.addComp<DotResist>(e, 10);
-		break;
-	case DT_GAS:
-		e = add_dot(x, y, r+0xF9, g+0xFD, b+0xFE, DP_NONE|DP_UP|DP_UP_SIDE|DP_SIDE);
-		dots.addComp<DotResist>(e, 4);
-		break;
-	case DT_NONE:
-		break;
-	}
-}
-
 void Dotfield::exptr(int x1, int y1, int x2, int y2, uint32_t r, uint8_t p) {
-	// auto st = Stepper(x1,y1,x2,y2);
-	// auto it = st.begin();
-	// it = it.operator++();
-	// while (it != st.end()) {
-	// 	auto vec = *it;
 	for (auto vec : Stepper(x1,y1,x2,y2)) {
 		// LOG_DBG("%d,%d",vec.x,vec.y);
 		if (!bounds(vec.x, vec.y)) continue;
@@ -79,12 +48,12 @@ void Dotfield::exptr(int x1, int y1, int x2, int y2, uint32_t r, uint8_t p) {
 		if (l2>((int)r)*((int)r)) return;
 		if (!lookup.empty(vec.x,vec.y)) {
 			auto e = lookup.get(vec.x, vec.y);
-			auto r = dots.getComp<DotResist>(e).resist;
-			if (r<=p) {
+			// auto r = dots.getComp<DotResist>(e).resist;
+			// if (r<=p) {
+			if (dots.tryGetComp<DotMovable>(e)) {
 				kill_dot(e);
 			} else return;
 		}
-		// it.operator++();
 	}
 }
 
@@ -107,7 +76,7 @@ void Dotfield::kill_dot(entID dot) {
 	this->dots.removeEntity(dot);
 }
 
-void Dotfield::kill_dot(uint32_t x, uint32_t y) {
+void Dotfield::kill_dot(int32_t x, int32_t y) {
 	if (this->lookup.empty(x,y)) return; 
 	auto e = this->lookup.get(x,y);
 	erase_dot(e);
@@ -115,7 +84,7 @@ void Dotfield::kill_dot(uint32_t x, uint32_t y) {
 	this->lookup.erase(x, y);
 }
 
-void Dotfield::move_dot(entID dot, uint32_t x, uint32_t y) {
+void Dotfield::move_dot(entID dot, int32_t x, int32_t y) {
 	DotMove& dm = dots.addComp<DotMove>(dot);
 	// dm->from = {dots.getComp<Dot>(dot).x, dots.getComp<Dot>(dot).y};
 	dm.to = {x,y};
@@ -127,42 +96,19 @@ void Dotfield::erase_dots() {
 	}
 }
 
-void Dotfield::update_dots() {
-	for (auto e : this->dots.view<Dot>()) {
-		auto& d = this->dots.getComp<Dot>(e);
-		if (d.y < 1) continue;
-		if (d.props & DP_DOWN && this->lookup.empty(d.x,d.y-1)){
-			this->move_dot(e, d.x, d.y-1); continue;
-		}
-		int32_t a = rand() & 0x00000002; a--;
-		if (d.props & DP_DOWN_SIDE) {
-			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y-1)) {
-				this->move_dot(e, d.x-a, d.y-1); 
-				continue;
-			} 
-			if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y-1)) {
-				this->move_dot(e, d.x+a, d.y-1); 
-				continue;
-			}
-		}
-		if (d.props & DP_UP && this->lookup.empty(d.x,d.y+1)){
-			this->move_dot(e, d.x, d.y+1); continue;
-		}
-		if (d.props & DP_UP_SIDE) {
-			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y+1)) {
-				this->move_dot(e, d.x-a, d.y+1); 
-				continue;
-			} 
-			if (d.x+a > 0 && d.x+a < this->x() && this->lookup.empty(d.x+a,d.y+1)) {
-				this->move_dot(e, d.x+a, d.y+1); 
-				continue;
-			}
-		}
-		if (d.props & DP_SIDE) {
-			if (d.x-a > 0 && d.x - a < this->x() && this->lookup.empty(d.x-a,d.y)) {
-				this->move_dot(e, d.x-a, d.y); 
-				continue;
-			}
+void Dotfield::update_dots(size_t ticks, float dt) {
+	for (auto e : dots.view<DotMovable>()) {
+		auto& dm = dots.getComp<DotMovable>(e);
+		dm.force({0.,-((float)dm.mass)}, dt); // gravity
+		// air? other updates? if I update dots here that affect others, must finish loop before doing the rest
+		auto& d = dots.getComp<Dot>(e);
+		dm.pos += dm.velo;
+		LOG_DBG("%f,%f", dm.pos.x,dm.pos.y);
+		int32_t ix = (int32_t)dm.pos.x;
+		int32_t iy = (int32_t)dm.pos.y;
+		LOG_DBG("%d,%d", ix, iy);
+		if (bounds(ix,iy) && ((ix != d.x) || (iy != d.y))) {
+			this->move_dot(e, ix, iy);
 		}
 	}
 }
@@ -190,7 +136,7 @@ void Dotfield::paint_dots() {
 	for (auto e : dots.view<Dot>()) {
 		// totalct++;
 		Dot& d = dots.getComp<Dot>(e);
-		color_texture((d.y * x()) + d.x, d.color);
+		color_texture(((uint32_t)d.y * x()) + (uint32_t)d.x, d.color);
 		// { //DEBUG
 		// 	if (debug.find({d.x,d.y}) != debug.end()) {
 		// 	}
