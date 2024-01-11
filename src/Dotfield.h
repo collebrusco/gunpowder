@@ -8,18 +8,16 @@
 #include "Dot.h"
 #include "util/Stepper.h"
 
-// namespace std { template <> struct hash<glm::ivec2> {
-// std::size_t operator()(const glm::ivec2& obj) const {
-// 	size_t a = std::hash<int>().operator()(obj.y);
-// 	a = (a << (sizeof(size_t)*4)) | (a >> (sizeof(size_t)*4));
-// 	return (std::hash<int>().operator()(obj.x) ^ (a));
-// }};}
 
+struct DotMove {
+	glm::ivec2 to;
+};
 
 class Dotfield {
 	uint8_t* _pixels;
 	uint32_t _x,_y, _size;
 	void erase_dot(entID e);
+	void color_texture(uint32_t i, uint8_t * clr);
 public:
 	ECS dots;
 	uint32_t x() const;
@@ -32,7 +30,6 @@ public:
 	bool bounds(int x, int y) const;
 
 	glm::ivec2 mouse_pos() const;
-	void color_texture(uint32_t i, uint8_t * clr);
 	template<typename...Args>
 	entID add_dot(uint32_t x, uint32_t y, Args... args) {
 		if (x < 0 || x > this->x() || y < 0 || y > this->y()) {
@@ -49,12 +46,21 @@ public:
 
 	void kill_dot(entID dot);
 	void kill_dot(int32_t x, int32_t y);
-	void move_dot(entID dot, int32_t x, int32_t y);
 
+	void q_move(entID dot, int32_t x, int32_t y);
+
+	void apply_gravity(size_t ticks, float dt);
+	// air? other forcers?
 	void update_dots(size_t ticks, float dt);
+
 	void commit_dots();
+
 	void erase_dots();
+
 	void paint_dots();
+
+
+
 
 	class DotLookup {
 		size_t w,h;

@@ -98,7 +98,7 @@ static void input() {
 					if ((mpos.x-(brush_size/2)+i) > df.x() || (mpos.y-(brush_size/2)+j) > df.y()) continue;
 					if (df.lookup.empty(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j)) {
 						auto e = df.add_dot(mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j,r -(rand()&0xF),g -(rand()&0xF),b -(rand()&0xF));
-						if (sel) df.dots.addComp<DotMovable>(e,10, mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j);
+						if (sel) df.dots.addComp<DotMovable>(e,10, mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j, window.keyboard[GLFW_KEY_N].down ? vec2(-4.,-4.) : vec2(0.,0.));
 						// df.dots.addComp<DotResist>(e, prop == DP_NONE ? 100 : 10);
 						// df.add_dot_type(dtype, mpos.x-(brush_size/2)+i,mpos.y-(brush_size/2)+j);
 					}
@@ -122,6 +122,8 @@ static Stopwatch ttm(ftime::MILLISECONDS);
 void DotRunner::user_tick(size_t ticks, float dt) {
 	ttm.reset_start();
 	tm.reset_start();
+
+	df.apply_gravity(ticks, dt);
 
 	df.update_dots(ticks, dt);
 	// LOG_DBG("update: %fms",tm.stop_reset_start());

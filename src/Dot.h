@@ -21,10 +21,6 @@ struct Dot {
 	uint8_t color[3];
 };
 
-struct DotMove {
-	glm::ivec2 to;
-};
-
 struct DotMovable {
 	DotMovable(uint8_t m, int x, int y, glm::vec2 v={0.,0.});
 	uint8_t mass;

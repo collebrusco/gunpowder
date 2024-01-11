@@ -84,7 +84,7 @@ void Dotfield::kill_dot(int32_t x, int32_t y) {
 	this->lookup.erase(x, y);
 }
 
-void Dotfield::move_dot(entID dot, int32_t x, int32_t y) {
+void Dotfield::q_move(entID dot, int32_t x, int32_t y) {
 	DotMove& dm = dots.addComp<DotMove>(dot);
 	// dm->from = {dots.getComp<Dot>(dot).x, dots.getComp<Dot>(dot).y};
 	dm.to = {x,y};
@@ -96,19 +96,22 @@ void Dotfield::erase_dots() {
 	}
 }
 
+void Dotfield::apply_gravity(size_t ticks, float dt) {
+	for (auto e : dots.view<DotMovable>()) {
+		auto& dm = dots.getComp<DotMovable>(e);
+		dm.force({0.,-1.8*((float)dm.mass)}, dt); // gravity
+	}
+}
+
 void Dotfield::update_dots(size_t ticks, float dt) {
 	for (auto e : dots.view<DotMovable>()) {
 		auto& dm = dots.getComp<DotMovable>(e);
-		dm.force({0.,-((float)dm.mass)}, dt); // gravity
-		// air? other updates? if I update dots here that affect others, must finish loop before doing the rest
 		auto& d = dots.getComp<Dot>(e);
 		dm.pos += dm.velo;
-		LOG_DBG("%f,%f", dm.pos.x,dm.pos.y);
 		int32_t ix = (int32_t)dm.pos.x;
 		int32_t iy = (int32_t)dm.pos.y;
-		LOG_DBG("%d,%d", ix, iy);
-		if (bounds(ix,iy) && ((ix != d.x) || (iy != d.y))) {
-			this->move_dot(e, ix, iy);
+		if ((ix != d.x) || (iy != d.y)) {
+			this->q_move(e, ix, iy); continue;
 		}
 	}
 }
@@ -117,39 +120,57 @@ void Dotfield::commit_dots() {
 	for (auto e : dots.view<DotMove>()) {
 		auto& d = dots.getComp<Dot>(e);
 		auto& dm = dots.getComp<DotMove>(e);
-		{
-			if (lookup.empty(dm.to.x, dm.to.y)) {
-				lookup.erase(d.x, d.y);
-				d.x = dm.to.x; d.y = dm.to.y;
-				lookup.set({d.x,d.y}, e);
+		auto& mv = dots.getComp<DotMovable>(e);
+		auto st = Stepper(d.x,d.y,dm.to.x,dm.to.y);
+		auto it = st.begin(); ++it;
+		for (; it != st.end(); ++it) { auto v = *it;
+			if (!bounds(v.x,v.y)) {
+				// collide (wall);
+				mv.pos = {(float)d.x,(float)d.y};
+				mv.velo = {0.,0.};
+				break;
 			}
+			if (!lookup.empty(v.x, v.y)) {
+				if (!dots.tryGetComp<DotMovable>(lookup.get(v.x,v.y))) {
+					// collide (v.x,v.y);
+					int bx = (d.x - v.x)*200; int by = (d.y - v.y)*200; // this doesnt work, can only be pi/4 multiple I realize. still a band aid if i fix it
+					for (auto bv : Stepper(d.x,d.y,bx,by)) {
+						if (lookup.empty(bv.x,bv.y)) break;
+						auto be = lookup.get(bv.x,bv.y);
+						auto bd = dots.getComp<Dot>(be);
+						auto* bmv = dots.tryGetComp<DotMovable>(be);
+						if (!bmv) break;
+						// if (dot(bmv->velo, mv.velo) > 0.) {
+							bmv->velo = {0.,0.};
+							bmv->pos = {(float)bd.x,(float)bd.y};
+						// }
+					}
+
+					// mv.pos = {(float)d.x,(float)d.y};
+					// mv.velo = {0.,0.};
+					break;
+				}
+				auto& ov = dots.getComp<DotMovable>(lookup.get(v.x,v.y)).velo;
+				// collide (v.x,v.y);
+				mv.pos = {(float)d.x,(float)d.y};
+				// if (ov == vec2(0.,0.) || dot(ov,mv.velo)<0.) mv.velo = vec2(0.,0.);
+				// if (dot(ov,mv.velo) < 0.f) mv.velo = {0.,0.};
+				break;
+			}
+			lookup.erase(d.x, d.y);
+			d.x = v.x; d.y = v.y;
+			lookup.set({d.x,d.y}, e);
 		}
 		dots.removeComp<DotMove>(e);
 	}
 
 }
-#include <unordered_set>
+
 void Dotfield::paint_dots() {
-	// std::unordered_set<ivec2> debug;
-	// size_t debugct = 0;
-	// size_t totalct = 0;
 	for (auto e : dots.view<Dot>()) {
-		// totalct++;
-		Dot& d = dots.getComp<Dot>(e);
+		Dot& d = dots.getComp<Dot>(e);\
 		color_texture(((uint32_t)d.y * x()) + (uint32_t)d.x, d.color);
-		// { //DEBUG
-		// 	if (debug.find({d.x,d.y}) != debug.end()) {
-		// 	}
-		// 	debug.insert({d.x,d.y});
-		// }
 	}
-	// { //deBUG
-	// 	static size_t ab = 0;
-	// 	if (totalct != debug.size()) {
-	// 		LOG_ERR("dot mismatch! %d total, %d dist", totalct, debug.size());
-	// 	}
-	// }
-	// debug.clear();
 }
 
 Dotfield::DotLookup::DotLookup(size_t x, size_t y) : w(x), h(y) {
