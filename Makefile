@@ -1,29 +1,3 @@
-# # EXAMPLE 1 build flgl, glad & glfw into dylib & link
-# UNAME_S = $(shell uname -s)
-
-# CC = clang++
-# CFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -Wno-newline-eof -Wno-unused-parameter
-# CFLAGS += -Ilib/flgl/inc -Ilib/flgl/lib/glfw/include -Ilib/flgl/lib/glm/
-# LDFLAGS = -Llib/flgl/bin/ -lflgl -Wl,-rpath,./lib/flgl/bin
-
-# .PHONY: all clean
-
-
-# all: libs main.o
-# 	 clang++ main.o $(LDFLAGS)
-
-# libs: 
-# 	cd lib/flgl && make dylib
-
-# main.o: main.cpp
-# 	clang++ -o main.o -c main.cpp $(CFLAGS)
-
-# clean:
-# 	cd lib/flgl && make clean
-# 	rm ./a.out
-
-
-# EXAMPLE 2 build flgl, glad & glfw with your project
 UNAME_S = $(shell uname -s)
 
 CC = clang
@@ -40,7 +14,7 @@ TARGET = main.out
 
 .PHONY: all clean dirs
 
-all: dirs libs 
+all: dirs libs b
 
 dirs:
 	mkdir -p ./$(BIN)
