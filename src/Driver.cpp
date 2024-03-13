@@ -9,9 +9,9 @@ GameDriver::GameDriver(uint32_t tr) : dt(_dt), launch_timer(_launch_timer),
                                     _close(false),
                                     _dt(1.f/60.f),
                                     _ticks(0),
-                                    _launch_timer(ftime::SECONDS),
-                                    tick_timer(ftime::SECONDS),
-                                    delta_timer(ftime::SECONDS)
+                                    _launch_timer(SECONDS),
+                                    tick_timer(SECONDS),
+                                    delta_timer(SECONDS)
 {
     t_pd = 1.f/(this->tick_rate);
 }

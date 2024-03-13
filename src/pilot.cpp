@@ -9,7 +9,6 @@
 #include "Dotfield.h"
 using namespace glm;
 using std::unordered_map;
-using ftime::Stopwatch;
 LOG_MODULE(game);
 
 DotRunner::DotRunner() : GameDriver(45) {}
@@ -122,8 +121,8 @@ static void TPS(float dt) {	static size_t ix = 0; static float buff[20];
 		LOG_INF("%1f TPS",sm/20.);
 	}
 }
-static Stopwatch tm(ftime::MILLISECONDS);
-static Stopwatch ttm(ftime::MILLISECONDS);
+static Stopwatch tm(MILLISECONDS);
+static Stopwatch ttm(MILLISECONDS);
 void DotRunner::user_tick(size_t ticks, float dt) {
 	ttm.reset_start();
 	tm.reset_start();

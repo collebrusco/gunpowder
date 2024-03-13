@@ -7,15 +7,13 @@
 #include "../lib/sw/Stopwatch.h"
 #include "Dotfield.h"
 
-using namespace ftime;
-
 struct DotRenderer {
 	Mesh<Vt_classic> quad;
 	Shader df_shad;
 	Texture df_tex;
 	Stopwatch timer;
 
-	DotRenderer() : timer(ftime::MILLISECONDS) {}
+	DotRenderer() : timer(MILLISECONDS) {}
 	void init() {
 		quad = DefaultMeshes::tile<Vt_classic>();
 		df_shad = Shader::from_source("passthrough_vert", "tex");
