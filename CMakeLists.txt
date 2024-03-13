@@ -8,8 +8,11 @@ add_subdirectory(lib/flgl)
 
 include_directories(${PROJECT_SOURCE_DIR}/lib/flgl/inc)
 
-file(GLOB_RECURSE PROJECT_SOURCES "src/*.cpp")
+file(GLOB_RECURSE PROJECT_SOURCES "src/*.cpp" "lib/ecs/*.cpp" "lib/sw/*.cpp")
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
 
 target_link_libraries(${PROJECT_NAME} FLGL)
