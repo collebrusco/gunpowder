@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.10)
+project(gunpowder)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+add_subdirectory(lib/flgl)
+
+include_directories(${PROJECT_SOURCE_DIR}/lib/flgl/inc)
+
+file(GLOB_RECURSE PROJECT_SOURCES "src/*.cpp")
+
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+
+target_link_libraries(${PROJECT_NAME} FLGL)
