@@ -17,7 +17,6 @@ int main() {
 
 	game.create();
 	game.start();
-	LOG_DBG("game starteD");
 	
 	return 0;
 }
