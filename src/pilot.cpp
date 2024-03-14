@@ -74,7 +74,6 @@ static void input() {
 	}
 	else if (window.keyboard[GLFW_KEY_K].pressed) {
 		// prop = DP_NONE | DP_DOWN | DP_DOWN_SIDE | DP_SIDE; r = 0x12; g = 0x0F; b = 0xFF;
-		LOG_DBG("water?");
 		dtype = DT_WATER;
 	}
 	else if (window.keyboard[GLFW_KEY_L].pressed) {

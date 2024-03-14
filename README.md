@@ -3,6 +3,7 @@
 ### H, J, K, L: Select Solid, Sand, Water, or Gas
 ### 1 - 9: Select Brush Size
 ### Hold V + Click: Create Explosion
+### Hold Space + Click: Erase
 ![screenshot](scs/screenshot.png)
 
 Remember those powder game or dust sim type of games? The king being https://dan-ball.jp/en/javagame/dust/    
