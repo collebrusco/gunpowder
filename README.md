@@ -10,5 +10,5 @@ Remember those side to side tank games from back in the day where you could take
 The idea of this project is to combine these types of old school online games into one. For now though, this project is in a very early stage that is just focused on developing the powder sim. Use the temporary controls listed above to mess with some falling sand! I'm also developing a fluid solver to add to this [here](https://github.com/collebrusco/fluid-solver-toy).
 
 ## Building
-See [flgl's guide for building flgl based gfx apps](https://github.com/collebrusco/flgl/blob/main/user/README.md)
+Builds with CMake. See [flgl's guide for building flgl based gfx apps](https://github.com/collebrusco/flgl/blob/main/user/README.md)
 
