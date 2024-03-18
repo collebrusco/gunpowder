@@ -7,8 +7,6 @@
 #include "../lib/sw/Stopwatch.h"
 #include "Dotfield.h"
 
-using namespace ftime;
-
 struct DotRenderer {
 	Mesh<Vt_classic> quad;
 	Shader df_shad;
